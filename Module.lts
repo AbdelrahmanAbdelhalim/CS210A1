@@ -1,0 +1,15 @@
+const Capacity = 4
+const MODULEIDS = 1
+const StudentIDS = 5
+Module(N = Capacity) = Module[0],
+Module[k:0..N] = (when (k < N) enroll -> Module[k+1] |
+				  when (k > 0) withdraw -> Module[k-1]).
+
+Student = (enroll -> withdraw -> Student).
+||Students = (s[0..StudentIDS]:Student).
+||Modules = (m[0..MODULEIDS]:Module).
+||Student_Module = (s[0..StudentIDS]:Student || s[0..StudentIDS]::Module).
+||Course = (m[0..MODULEIDS]:Student_Module).
+
+
+
