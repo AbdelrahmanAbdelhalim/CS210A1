@@ -6,6 +6,7 @@ public class Module{
 	private String moduleCoordinator;
 	private ArrayList<Student> currentStudents = new ArrayList<Student>(); // to prevent the same student from enrolling twice
 	private ArrayList<Student> waitingList = new ArrayList<Student>();
+	private ArrayList<Student> leavingList = new ArrayList<Student>();
 
 	/*
 	total number of students ina module can not exceed its capacity
@@ -27,18 +28,63 @@ public class Module{
 		}
 		return false;
 	}
-	public  boolean canEnroll (Student student){
-		if(currentStudents.size() < capacity){
-			return true;
+
+	public synchronized void addStudent(Student student){
+		try{
+			while(currentStudents.size() >= capacity){
+				waitingList.add(student);
+				wait();
+			}
+			currentStudents.add(student);
+			notifyAll();
+		}catch(Exception ex){
+				System.out.println(ex + " add Module");
 		}
-		System.out.println("Module " + name + " is full at the moment");
-		waitingList.add(student);
-		return false;
 	}
-	public  void addStudent(Student student){
-		currentStudents.add(student);
+	public synchronized void addStudent(Student student, Module moduleToSwitchWith){
+		Student temp = null;
+		try{
+			while(currentStudents.size() >= capacity){
+				waitingList.add(student);
+				System.out.println("Student " + student.getStudentId() + " is waiting for module " + moduleCode);
+				for(Student st : currentStudents){
+					if(moduleToSwitchWith.isWaitingForThisModule(st)){
+						temp = st;
+						System.out.println("True");
+						removeStudent(temp);
+						addStudent(student);
+						break;
+					}
+				}
+				wait();
+			}
+			currentStudents.add(student);
+			notifyAll();
+		}catch(Exception ex){
+				System.out.println(ex + "add student module");
+		}
 	}
 
+	public  void removeStudent(Student student){
+		try{
+			for(Student st : currentStudents){
+				if(student.equals(st)){
+					currentStudents.remove(student);
+					notifyAll();
+				}
+			}
+		}catch(Exception exc){
+
+		}
+	}
+	public boolean isWaitingForThisModule(Student student){
+		for (Student st : waitingList){
+			if(st.equals(student)){
+				return true;
+			}
+		}
+		return false;
+	}
 	public void printEnrolledStudents(){
 		for(Student st : currentStudents){
 			System.out.println(st.getStudentId());
