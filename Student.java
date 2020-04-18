@@ -60,9 +60,11 @@ public class Student implements Runnable{
 		for(Module module : modulesToLeave){
 			withdraw(module);
 		}
-		Module m1 = modulesToSwitch.get(0);
-		Module m2 = modulesToSwitch.get(1);
-		switchModules(m1,m2);
+		if(modulesToSwitch.size() > 0){
+			Module m1 = modulesToSwitch.get(0);
+			Module m2 = modulesToSwitch.get(1);
+			switchModules(m1,m2);
+		}
 	}
 }
 /*

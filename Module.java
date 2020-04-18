@@ -1,12 +1,14 @@
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList; 
+import java.util.*; 
+
 public class Module{
 	private String name;
 	private int capacity;
 	private String moduleCode;
 	private String moduleCoordinator;
-	private ArrayList<Student> currentStudents = new ArrayList<Student>(); // to prevent the same student from enrolling twice
-	private ArrayList<Student> waitingList = new ArrayList<Student>();
-	private ArrayList<Student> leavingList = new ArrayList<Student>();
+	private CopyOnWriteArrayList<Student> currentStudents = new CopyOnWriteArrayList<Student>(); // to prevent the same student from enrolling twice
+	private CopyOnWriteArrayList<Student> waitingList = new CopyOnWriteArrayList<Student>();
+	private CopyOnWriteArrayList<Student> leavingList = new CopyOnWriteArrayList<Student>();
 
 	/*
 	total number of students ina module can not exceed its capacity
@@ -44,33 +46,31 @@ public class Module{
 	public synchronized void addStudent(Student student, Module moduleToSwitchWith){
 		Student temp = null;
 		try{
-			while(currentStudents.size() >= capacity){
-				waitingList.add(student);
-				System.out.println("Student " + student.getStudentId() + " is waiting for module " + moduleCode);
-				for(Student st : currentStudents){
-					if(moduleToSwitchWith.isWaitingForThisModule(st)){
-						temp = st;
-						System.out.println("True");
-						removeStudent(temp);
-						addStudent(student);
-						break;
-					}
+			boolean conflictResolved = false;
+			waitingList.add(student);
+			System.out.println("Student " + student.getStudentId() + " is waiting for module " + moduleCode);
+			for(Student st : currentStudents){
+				if(moduleToSwitchWith.isWaitingForThisModule(st)){
+					temp = st;
+					conflictResolved = true;
+					waitingList.remove(st);
+					this.removeStudent(temp);
 				}
+			}	
+			while(currentStudents.size() >= capacity & !conflictResolved){
 				wait();
 			}
-			currentStudents.add(student);
 			notifyAll();
 		}catch(Exception ex){
-				System.out.println(ex + "add student module");
+				System.out.println(ex + " " + student.getStudentId());
 		}
 	}
 
-	public  void removeStudent(Student student){
+	public void removeStudent(Student student){
 		try{
 			for(Student st : currentStudents){
 				if(student.equals(st)){
 					currentStudents.remove(student);
-					notifyAll();
 				}
 			}
 		}catch(Exception exc){
