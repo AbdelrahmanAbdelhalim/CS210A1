@@ -6,9 +6,8 @@ public class Module{
 	private int capacity;
 	private String moduleCode;
 	private String moduleCoordinator;
-	private CopyOnWriteArrayList<Student> currentStudents = new CopyOnWriteArrayList<Student>(); // to prevent the same student from enrolling twice
-	private CopyOnWriteArrayList<Student> waitingList = new CopyOnWriteArrayList<Student>();
-	private CopyOnWriteArrayList<Student> leavingList = new CopyOnWriteArrayList<Student>();
+	private ArrayList<Student> currentStudents = new ArrayList<Student>(); // to prevent the same student from enrolling twice
+	private ArrayList<Student> waitingList = new ArrayList<Student>();
 
 	/*
 	total number of students ina module can not exceed its capacity
@@ -43,39 +42,24 @@ public class Module{
 				System.out.println(ex + " add Module");
 		}
 	}
-	public synchronized void addStudent(Student student, Module moduleToSwitchWith){
-		Student temp = null;
-		try{
-			boolean conflictResolved = false;
-			waitingList.add(student);
-			System.out.println("Student " + student.getStudentId() + " is waiting for module " + moduleCode);
-			for(Student st : currentStudents){
-				if(moduleToSwitchWith.isWaitingForThisModule(st)){
-					temp = st;
-					conflictResolved = true;
-					waitingList.remove(st);
-					this.removeStudent(temp);
-				}
-			}	
-			while(currentStudents.size() >= capacity & !conflictResolved){
-				wait();
-			}
-			notifyAll();
-		}catch(Exception ex){
-				System.out.println(ex + " " + student.getStudentId());
-		}
-	}
-
 	public void removeStudent(Student student){
 		try{
 			for(Student st : currentStudents){
 				if(student.equals(st)){
 					currentStudents.remove(student);
+					notifyAll();
 				}
 			}
 		}catch(Exception exc){
 
 		}
+	}
+	public boolean crossCheckCurrentStudentsWithWaitingList(Module module){
+		boolean found = false;
+		for(Student st : currentStudents){
+			found = module.isWaitingForThisModule(st);
+		}
+		return found;
 	}
 	public boolean isWaitingForThisModule(Student student){
 		for (Student st : waitingList){
@@ -90,9 +74,20 @@ public class Module{
 			System.out.println(st.getStudentId());
 		}
 	}
+	public boolean moduleHasSpace (){
+		return currentStudents.size() <= capacity;
+	}
+	public void addToWaitingList(Student student){
+		waitingList.add(student);
+	}
+	public void removeFromWaitingList(Student student){
+		waitingList.remove(student);
+	}
+
 	public String getModuleId(){
 		return moduleCode;
 	}
+
 	public boolean equals(Module module){
 		if(this.moduleCode == module.moduleCode){
 			return true;

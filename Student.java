@@ -20,18 +20,24 @@ public class Student implements Runnable{
 				module.addStudent(this);
 				modules.add(module);
 				System.out.println("Student " + name + " Successfully Enrolled in module: " + module.getModuleId());
-				Thread.sleep(1000);
 			}
 		}catch(Exception ex){
 			System.out.println(ex + studentID);
 		}	
 	}
-	public synchronized void enroll(Module moduleToGo, Module moduleToLeave){
+	public void enroll(Module moduleToGo, Module moduleToLeave){
 		try{
 			if(!moduleToGo.alreadyEnrolled(this)){
-				moduleToGo.addStudent(this,moduleToLeave);
-				modules.add(moduleToGo);
-				System.out.println("Student " + name + " Successfully Enrolled in module: " + moduleToGo.getModuleId());
+				if (moduleToGo.moduleHasSpace()){
+					withdraw(moduleToLeave);
+					enroll(moduleToGo);
+				}else{
+					boolean conflictResolved = false;
+					moduleToGo.addToWaitingList(this);
+					conflictResolved = moduleToGo.crossCheckCurrentStudentsWithWaitingList(moduleToLeave);
+					moduleToLeave.removeStudent(this);
+					enroll(moduleToGo);
+				}
 			}
 		}catch(Exception ex){
 			System.out.println(ex + studentID);
@@ -67,10 +73,3 @@ public class Student implements Runnable{
 		}
 	}
 }
-/*
-modules can enroll
-change their minds
-number of modules can not exceed the limit of modules a student can enroll in
-can't enroll on the same module twice.
-states for moduels enrolled (mysterious thoughts)
-*/
